@@ -21,7 +21,7 @@
 
 ### ⚡ 极致 Token 效率
 
-轻量任务同等质量下，Token相比claude code消耗降低约 **90%**
+轻量任务同等质量下，token消耗相比claude code降低约 **90%**
 
 - 结构化事实提取替代机械截断
 - 三阶段感知压缩动态调整保护边界
@@ -82,7 +82,8 @@ pip install -r requirements.txt
 
 ```bash
 # 复制环境变量模板
-cp .env.example .env
+cp .env.example .env  # linux
+copy .env.example .env  # windows
 
 # 编辑 .env，填入 API Key（建议zhipu，所有测试及优化均在zhipu下进行）
 # ZHIPUAI_API_KEY=xxx
@@ -95,19 +96,19 @@ cp .env.example .env
 
 ```bash
 # 直接运行
-python cli.py
+python cli.py  #不建议此种方式，不带路径的话默认是此项目根目录，推荐计时模式
 
 # 指定工作目录
-python cli.py --dir /path/to/project
+python cli.py --dir /your-project
 
 # 调试模式（打印 API 请求/响应）
-python cli.py --debug
+python cli.py --dir /your-project --debug  #需要查看完整prompt时可打开（包括request和response）
 
 # 计时模式（显示每个节点耗时）
-python cli.py --time
+python cli.py --dir /your-project --time  #强烈推荐！！！
 
 # 示例
-python cli.py --dir /path/to/project --debug --time
+python cli.py --dir /your-project --debug --time
 ```
 
 ### CLI 命令
