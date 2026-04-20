@@ -1,0 +1,3 @@
+.env
+.pytest_cache
+my_agent.egg-info
