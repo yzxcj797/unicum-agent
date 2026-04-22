@@ -22,6 +22,39 @@ from my_agent.constants import get_home, DEFAULT_MODEL
 from core.agent import AIAgent
 from core.memory_store import memory_store
 
+
+# ── 对话日志 ──────────────────────────────────────────────────────────
+
+class ConversationLogger:
+    """实时将对话记录写入 Markdown 文件。"""
+
+    def __init__(self, working_dir: str):
+        self._path = Path(working_dir).resolve() / "conversation.md"
+        is_new = not self._path.exists()
+        if is_new:
+            self._write(f"# 对话记录\n\n")
+        self._write(f"---\n\n**会话开始: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}**\n")
+
+    def _write(self, text: str):
+        self._path.open("a", encoding="utf-8").write(text)
+
+    def log_user(self, message: str):
+        self._write(f"\n## 用户\n\n{message}\n")
+
+    def log_agent(self, response: str):
+        self._write(f"\n## Agent\n\n{response}\n")
+
+    def log_tool(self, name: str, args: dict, success: bool):
+        icon = "✓" if success else "✗"
+        preview = json.dumps(args, ensure_ascii=False)[:120]
+        self._write(f"\n> {icon} `{name}` {preview}\n")
+
+    def log_path(self):
+        return str(self._path)
+
+
+_conv_logger: ConversationLogger = None
+
 logger = logging.getLogger(__name__)
 console = Console()
 
@@ -170,6 +203,8 @@ def on_tool_complete(name: str, args: dict, result: str):
             extra = f" [dim]({engine})[/dim]"
     console.print(f"  {icon} [dim]{ts}{name}{extra}[/dim]")
     _record_event(f"工具完成: {name} ({status})")
+    if _conv_logger:
+        _conv_logger.log_tool(name, args, success)
 
 
 # ---------------------------------------------------------------------------
@@ -301,7 +336,7 @@ def _debug_print(label: str, data):
 
 def main():
     """CLI 入口。"""
-    global _start_time, _show_time
+    global _start_time, _show_time, _conv_logger
     working_dir, verbose, debug, show_time = _parse_args()
     _show_time = show_time
 
@@ -352,6 +387,10 @@ def main():
     # 需要在 agent 初始化后才能 import registry（工具已注册）
     from tools.registry import registry
 
+    # 初始化对话日志
+    _conv_logger = ConversationLogger(agent.working_dir)
+    console.print(f"[dim]对话日志: {_conv_logger.log_path()}[/dim]")
+
     console.print("[dim]输入消息开始对话，/help 查看命令[/dim]\n")
 
     # 主循环
@@ -378,6 +417,9 @@ def main():
             global _stream_buffer
             _stream_buffer = ""
 
+            # 记录用户输入
+            _conv_logger.log_user(user_input)
+
             if _show_time:
                 console.print(f"[cyan][{_elapsed()}][/cyan] 任务开始")
                 _record_event("任务开始")
@@ -393,6 +435,8 @@ def main():
                 # 流式已输出，只需补换行
                 sys.stdout.write("\n")
                 sys.stdout.flush()
+                # 流式内容即为 agent 响应
+                _conv_logger.log_agent(_stream_buffer)
             elif response:
                 console.print()  # 空行
                 console.print(Panel(
@@ -402,6 +446,7 @@ def main():
                     title_align="left",
                 ))
                 console.print()  # 空行
+                _conv_logger.log_agent(response)
 
             if _show_time:
                 console.print(f"[cyan][{_elapsed()}][/cyan] 任务完成")

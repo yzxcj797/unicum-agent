@@ -168,6 +168,10 @@ class AIAgent:
         """完整接口：运行 Agent 循环，返回详细结果。"""
         self._ensure_initialized()
 
+        # 新对话重置迭代预算和 facts，允许连续对话
+        self.iteration_budget = IterationBudget(self.max_iterations)
+        self._client._facts = {}
+
         # 添加用户消息（直接存入 client 的原生格式）
         self._client.add_user(user_message)
 
