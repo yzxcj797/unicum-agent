@@ -60,7 +60,7 @@ class AIAgent:
     def __init__(
         self,
         model: str = None,
-        max_iterations: int = 50,
+        max_iterations: int = 150,
         tool_delay: float = 0.01,
         enabled_toolsets: List[str] = None,
         disabled_toolsets: List[str] = None,

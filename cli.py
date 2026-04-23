@@ -36,7 +36,9 @@ class ConversationLogger:
         self._write(f"---\n\n**会话开始: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}**\n")
 
     def _write(self, text: str):
-        self._path.open("a", encoding="utf-8").write(text)
+        # 清除 surrogate 字符，避免写入时报错
+        safe = text.encode("utf-8", errors="replace").decode("utf-8")
+        self._path.open("a", encoding="utf-8").write(safe)
 
     def log_user(self, message: str):
         self._write(f"\n## 用户\n\n{message}\n")
@@ -320,6 +322,11 @@ def _parse_args():
         else:
             filtered.append(args[i])
             i += 1
+    # 未识别的非 flag 参数视为工作目录
+    for a in filtered:
+        if not a.startswith("-") and os.path.isdir(a):
+            working_dir = a
+            break
     verbose = "--verbose" in filtered or "-v" in filtered
     debug = "--debug" in filtered
     show_time = "--time" in filtered
@@ -361,7 +368,7 @@ def main():
     try:
         agent = AIAgent(
             model=config.get("model"),
-            max_iterations=config.get("max_iterations", 50),
+            max_iterations=config.get("max_iterations", 150),
             tool_delay=config.get("tool_delay", 0.5),
             enabled_toolsets=config.get("enabled_toolsets"),
             disabled_toolsets=config.get("disabled_toolsets"),

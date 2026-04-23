@@ -42,7 +42,7 @@ _PROVIDERS = [
 
 _DEFAULT_CONFIG: Dict[str, Any] = {
     "model": None,  # 自动检测
-    "max_iterations": 50,
+    "max_iterations": 150,
     "tool_delay": 0.5,
     "enabled_toolsets": None,
     "disabled_toolsets": None,
